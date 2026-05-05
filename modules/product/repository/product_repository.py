@@ -1,9 +1,11 @@
 from sqlalchemy.orm import Session, joinedload
+from fastapi.encoders import jsonable_encoder
 from database.db import PostgreDatabase
 from modules.product.models.product import Product
 from modules.product.models.image import ImageData
 from modules.product.models.image_product import ImageProduct
 from typing import List, Optional
+from ..schemas.schemas import ImageDataResponse
 
 
 class ProductRepository:
@@ -33,7 +35,7 @@ class ProductRepository:
         finally:
             session.close()
     
-    def get_products_by_vector(self, array_vector: List[float], top_k: int = 5) -> List[ImageData]:
+    def get_products_by_vector(self, array_vector: List[float], top_k: int = 5) -> List[ImageDataResponse]:
         """Obtener productos similares basados en un vector de características"""
         session = self.db.get_session()
         try:
@@ -41,10 +43,9 @@ class ProductRepository:
             products = session.query(ImageData).order_by(
                 ImageData.vector.cosine_distance(array_vector)
             ).limit(top_k).options(
-                    joinedload(ImageData.productos),
                     joinedload(ImageData.productos).joinedload(ImageProduct.producto)
                 ).all()
-            return products
+            return [ImageDataResponse.from_entity(product) for product in products]
         finally:
             session.close()
     

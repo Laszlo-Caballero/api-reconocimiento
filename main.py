@@ -14,6 +14,7 @@ ia = IA()
 
 register_exception_handlers(app)
 
+
 # Registrar rutas de productos
 app.include_router(product_router)
 
