@@ -3,7 +3,7 @@ CREATE EXTENSION IF NOT EXISTS vector;
 create table imagenes(
     imagenId serial primary key,
     url varchar(255),
-    vector vector(1536)   
+    vector vector(512)   
 )
 
 create table productos (
@@ -20,7 +20,7 @@ create table productos (
 )
 
 create table producto_imagen (
+    producto_imagenId serial primary key,
     productoId int references productos(productoId),
-    imagenId int references imagenes(imagenId),
-    primary key (productoId, imagenId)
+    imagenId int references imagenes(imagenId)
 )

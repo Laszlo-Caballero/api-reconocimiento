@@ -10,3 +10,5 @@ wheels/
 .venv
 
 .env
+
+utils/json_products/images/
