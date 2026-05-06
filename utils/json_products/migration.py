@@ -38,42 +38,44 @@ async def migrate_json_to_db():
         aux += 1
         print(f"Migrando producto {aux}/{len(products)}: {product.name}")
         
-        vectors = []
+        try:
+            vectors = []
         
-        for image_path in product.images:
-            image = Image.open(f"utils/json_products/{image_path}")
-            vector = ia.to_vector_image(image)
-            
-            vectors.append({
-                "image_path": image_path,
-                "vector": vector.tolist()
-            })
-            
-        new_product = Product(
-            nombre=product.name,
-            precios=product.price,
-            vendido_por=product.buy_by,
-            marca=product.brand,
-            url_venta=product.url,
-            caracteristicas=product.caracteristics,
-            especificaciones=product.spects,
-            categoria=product.category,
-            sub_categoria=product.sub_category,
-        )
-        
-        save_product = repository.create_product(new_product)
-        
-        for vector_data in vectors:
-            
-            new_image = ImageData(
-                url=vector_data["image_path"],
-                vector=vector_data["vector"]
+            for image_path in product.images:
+                image = Image.open(f"utils/json_products/{image_path}")
+                vector = ia.to_vector_image(image)
+                
+                vectors.append({
+                    "image_path": image_path,
+                    "vector": vector.tolist()
+                })
+                
+            new_product = Product(
+                nombre=product.name,
+                precios=product.price,
+                vendido_por=product.buy_by,
+                marca=product.brand,
+                url_venta=product.url,
+                caracteristicas=product.caracteristics,
+                especificaciones=product.spects,
+                categoria=product.category,
+                sub_categoria=product.sub_category,
             )
             
-            save_image = repository.insert_image(new_image)
-        
-            repository.add_image_to_product(save_product.productoid, save_image.imagenid)
-        
+            save_product = repository.create_product(new_product)
+            
+            for vector_data in vectors:
+                
+                new_image = ImageData(
+                    url=vector_data["image_path"],
+                    vector=vector_data["vector"]
+                )
+                
+                save_image = repository.insert_image(new_image)
+            
+                repository.add_image_to_product(save_product.productoid, save_image.imagenid)
+        except Exception as e:
+            print(f"Error al migrar producto {product.name}: {e}")    
         
         
 if __name__ == "__main__":

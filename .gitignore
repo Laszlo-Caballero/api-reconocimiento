@@ -12,3 +12,4 @@ wheels/
 .env
 
 utils/json_products/images/
+images/

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, Table, ForeignKey
+from sqlalchemy import Column, Integer, String, Float, Table, ForeignKey, Text
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from sqlalchemy.ext.declarative import declarative_base
 from pgvector.sqlalchemy import Vector
@@ -12,7 +12,7 @@ class ImageData(Base):
     __tablename__ = "imagenes"
     
     imagenid: Mapped[int] = mapped_column(Integer, primary_key=True)
-    url: Mapped[str] = mapped_column(String(255), nullable=False)
+    url: Mapped[str] = mapped_column(Text, nullable=False)
     vector: Mapped[Vector] = mapped_column(Vector(512), nullable=True)
     
     productos: Mapped[List["ImageProduct"]] = relationship("ImageProduct", back_populates="imagen")
