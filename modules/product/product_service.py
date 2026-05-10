@@ -18,7 +18,7 @@ class ProductService:
         
         vector_image = self.ia.to_vector_image(image)
         
-        images = self.repository.get_products_by_vector(vector_image.tolist(), 100)
+        images = self.repository.get_products_by_vector(vector_image.tolist())
 
         return JSONResponse(content={
                 "data": jsonable_encoder(images),
