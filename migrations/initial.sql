@@ -3,7 +3,9 @@ CREATE EXTENSION IF NOT EXISTS vector;
 create table imagenes(
     imagenId serial primary key,
     url TEXT,
-    vector vector(512)   
+    vector vector(512),
+    productoId integer,
+    foreign key (productoId) references productos(productoId)   
 )
 
 create table productos (
@@ -17,10 +19,4 @@ create table productos (
     categoria varchar(255),
     sub_categoria varchar(255),
     especificaciones jsonb
-)
-
-create table producto_imagen (
-    producto_imagenId serial primary key,
-    productoId int references productos(productoId),
-    imagenId int references imagenes(imagenId)
 )

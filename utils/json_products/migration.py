@@ -14,7 +14,6 @@ from utils.json_products.product import Product as ProductoDto
 from PIL import Image
 from modules.product.models.product import Product
 from modules.product.models.image import ImageData
-from modules.product.models.image_product import ImageProduct
 from dotenv import load_dotenv
 
 
@@ -68,12 +67,12 @@ async def migrate_json_to_db():
                 
                 new_image = ImageData(
                     url=vector_data["image_path"],
-                    vector=vector_data["vector"]
+                    vector=vector_data["vector"],
+                    producto=save_product
                 )
                 
-                save_image = repository.insert_image(new_image)
+                repository.create_image(new_image)
             
-                repository.add_image_to_product(save_product.productoid, save_image.imagenid)
         except Exception as e:
             print(f"Error al migrar producto {product.name}: {e}")    
         
