@@ -1,10 +1,13 @@
 from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import func
 from fastapi.encoders import jsonable_encoder
 from database.db import PostgreDatabase
 from modules.product.models.product import Product
 from modules.product.models.image import ImageData
 from typing import List, Optional
 from ..schemas.schemas import ProductResponse
+
+
 
 
 class ProductRepository:
@@ -38,13 +41,21 @@ class ProductRepository:
         """Obtener productos similares basados en un vector de características"""
         session = self.db.get_session()
         try:
+            similarity_score = (
+                (1- ImageData.vector.cosine_distance(array_vector)) * 100).label("similarity_score")
             # Usar pgvector para calcular similitud y obtener los top_k productos más similares
-            products = session.query(Product).join(Product.imagenes).order_by(
-                ImageData.vector.cosine_distance(array_vector)
+            products = session.query(Product, similarity_score).join(Product.imagenes).order_by(
+                    similarity_score.desc()
             ).limit(top_k).options(
                     joinedload(Product.imagenes)
                 ).all()
-            return [ProductResponse.from_entity(product) for product in products]
+            
+            products_res = []
+            for product, score in products:
+                product_response = ProductResponse.from_entity(product)
+                product_response.similitud = score
+                products_res.append(product_response)
+            return products_res
         finally:
             session.close()
     

@@ -31,6 +31,7 @@ class ProductResponse(BaseModel):
     sub_categoria: str
     especificaciones: List[str]
     imagenes: Optional[List[ImageDataResponse]] = []
+    similitud: Optional[float] = None
     
     class Config:
         from_attributes = True
