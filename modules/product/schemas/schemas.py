@@ -5,7 +5,7 @@ from typing import List, Optional
 class ImageDataResponse(BaseModel):
     imagenId: int
     url: str
-    productos: Optional[List["ImageProductResponse"]] = []
+    # producto: Optional["ProductResponse"] = None
     
     class Config:
         from_attributes = True
@@ -15,25 +15,7 @@ class ImageDataResponse(BaseModel):
         return cls(
             imagenId=entity.imagenid,
             url=entity.url,
-            productos=[ImageProductResponse.from_entity(ip) for ip in entity.productos]
-        )
-
-class ImageProductResponse(BaseModel):
-    producto_imagenId: int
-    productoId: int
-    imagenId: int
-    producto: Optional["ProductResponse"] = None
-    
-    class Config:
-        from_attributes = True
-        
-    @classmethod
-    def from_entity(cls, entity):
-        return cls(
-            producto_imagenId=entity.producto_imagenid,
-            productoId=entity.productoid,
-            imagenId=entity.imagenid,
-            producto=ProductResponse.from_entity(entity.producto) if entity.producto else None
+            # producto=ProductResponse.from_entity(entity.producto) if entity.producto else None
         )
 
 
@@ -48,7 +30,7 @@ class ProductResponse(BaseModel):
     categoria: str
     sub_categoria: str
     especificaciones: List[str]
-    # imagenes: Optional[List[ImageProductResponse]] = []
+    imagenes: Optional[List[ImageDataResponse]] = []
     
     class Config:
         from_attributes = True
@@ -66,5 +48,5 @@ class ProductResponse(BaseModel):
             categoria=entity.categoria,
             sub_categoria=entity.sub_categoria,
             especificaciones=entity.especificaciones,
-            # imagenes=[ImageProductResponse.from_entity(ip) for ip in entity.imagenes]
+            imagenes=[ImageDataResponse.from_entity(ip) for ip in entity.imagenes]
         )
