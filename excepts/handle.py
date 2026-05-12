@@ -6,5 +6,5 @@ def register_exception_handlers(app):
     async def generic_exception_handler(request: Request, exc: Exception):
         return JSONResponse(
             status_code=500,
-            content={"message": "An unexpected error occurred."}
+            content={"message": "An unexpected error occurred.", "data": None, "status": "error"},
         )
