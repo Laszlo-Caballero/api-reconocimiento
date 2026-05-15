@@ -17,3 +17,8 @@ class IA:
             image_features = self.model.encode_image(image)
             return image_features.cpu().numpy()[0]
     
+    def to_vector_text(self, text):
+        text = clip.tokenize([text]).to(self.device)
+        with torch.no_grad():
+            text_features = self.model.encode_text(text)
+            return text_features.cpu().numpy()[0]

@@ -8,8 +8,6 @@ from typing import List, Optional
 from ..schemas.schemas import ProductResponse
 
 
-
-
 class ProductRepository:
     def __init__(self):
         self.db = PostgreDatabase()
