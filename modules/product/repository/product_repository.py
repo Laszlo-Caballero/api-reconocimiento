@@ -57,6 +57,27 @@ class ProductRepository:
         finally:
             session.close()
     
+    def get_product_by_text_vector(self, array_vector: List[float], top_k: int = 5) -> List[ProductResponse]:
+        """Obtener productos similares basados en un vector de texto"""
+        session = self.db.get_session()
+        try:
+            similarity_score = (
+                (1- Product.vector_nombre.cosine_distance(array_vector)) * 100).label("similarity_score")
+            products = session.query(Product, similarity_score).order_by(
+                    similarity_score.desc()
+            ).limit(top_k).options(
+                    joinedload(Product.imagenes)
+                ).all()
+            
+            products_res = []
+            for product, score in products:
+                product_response = ProductResponse.from_entity(product)
+                product_response.similitud = score
+                products_res.append(product_response)
+            return products_res
+        finally:
+            session.close()
+    
     def create_image(self, image_data: ImageData) -> ImageData:
         """Crear una nueva imagen"""
         session = self.db.get_session()

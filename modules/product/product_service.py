@@ -25,4 +25,15 @@ class ProductService:
                 "message": "Productos encontrados exitosamente",
                 "status": "success"
             }, status_code=200)
+    
+    def find_products_by_voice(self, query: str):
+        vector_text = self.ia.to_vector_text(query)
         
+        
+        data = self.repository.get_product_by_text_vector(vector_text.tolist())
+        
+        return JSONResponse(content={
+                "data": jsonable_encoder(data),
+                "message": "Productos encontrados exitosamente",
+                "status": "success"
+            }, status_code=200)

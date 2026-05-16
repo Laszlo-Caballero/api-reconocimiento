@@ -3,6 +3,7 @@ from modules.product.product_service import ProductService
 from modules.product.dto.product_dto import ProductCreateDTO, ProductUpdateDTO, ProductDTO
 from typing import List
 from fastapi_utils.cbv import cbv
+from .dto.voice_dto import VoiceQueryDTO
 
 router = APIRouter(
     prefix="/api/products",
@@ -17,5 +18,6 @@ class ProductController:
     @router.post("/identify", status_code=status.HTTP_200_OK)
     def identify_product_by_image(self, file: UploadFile):
             return self.service.find_product_by_image_vector(file)
-
-
+    @router.post("/voice", status_code=status.HTTP_200_OK)
+    def get_products_by_voice(self, body: VoiceQueryDTO):
+            return self.service.find_products_by_voice(body.query)

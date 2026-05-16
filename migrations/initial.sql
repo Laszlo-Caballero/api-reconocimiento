@@ -18,5 +18,6 @@ create table productos (
     caracteristicas jsonb,
     categoria varchar(255),
     sub_categoria varchar(255),
-    especificaciones jsonb
+    especificaciones jsonb,
+    vector_nombre vector(512)
 )

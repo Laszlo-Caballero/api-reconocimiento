@@ -3,9 +3,11 @@ from sqlalchemy.orm import relationship, Mapped, mapped_column
 from sqlalchemy.ext.declarative import declarative_base
 from typing import List, TYPE_CHECKING
 from database.base import Base
+from pgvector.sqlalchemy import Vector
 
 if TYPE_CHECKING:
     from .image import ImageData
+    
 
 class Product(Base):
     __tablename__ = "productos"
@@ -20,6 +22,7 @@ class Product(Base):
     categoria: Mapped[str] = mapped_column(String(255), nullable=True)
     sub_categoria: Mapped[str] = mapped_column(String(255), nullable=True)
     especificaciones: Mapped[list] = mapped_column(JSON, nullable=True)
+    vector_nombre: Mapped[Vector] = mapped_column(Vector(512), nullable=True)
     
     imagenes: Mapped[List["ImageData"]] = relationship("ImageData", back_populates="producto")
     
