@@ -45,6 +45,9 @@ class FloorpanV2Service:
             viz_path = self.images_dir / viz_filename
             cv2.imwrite(str(viz_path), result_img)
             
+            # Obtener dimensiones de la imagen
+            w, h = pil_img.size
+
             # Convertir NetworkX G a formato serializable
             nodes = []
             for node_id, data in G.nodes(data=True):
@@ -78,9 +81,63 @@ class FloorpanV2Service:
                 "nodes": nodes,
                 "edges": edges,
                 "summary": summary,
-                "visualization_url": f"/images/floorplan/{viz_filename}"
+                "visualization_url": f"/images/floorplan/{viz_filename}",
+                "width": int(w),
+                "height": int(h)
             }
             
+            # Guardar en base de datos (PostgreSQL)
+            try:
+                from database.db import PostgreDatabase
+                from modules.product.models.tienda import Tienda
+                from modules.product.models.product import Product
+
+                db = PostgreDatabase()
+                session = db.get_session()
+
+                graph_json = {
+                    "nodes": nodes,
+                    "edges": edges,
+                    "width": int(w),
+                    "height": int(h)
+                }
+
+                store_name = Path(file.filename).stem.replace("_", " ").replace("-", " ").strip()
+
+                db_tienda = session.query(Tienda).filter_by(nombre=store_name).first()
+                if not db_tienda:
+                    db_tienda = Tienda(
+                        nombre=store_name,
+                        latitud=None,
+                        longitud=None,
+                        nodo_id=None,
+                        grafo=graph_json,
+                        ancho=int(w),
+                        alto=int(h)
+                    )
+                    session.add(db_tienda)
+                    session.flush()
+                else:
+                    db_tienda.latitud = None
+                    db_tienda.longitud = None
+                    db_tienda.nodo_id = None
+                    db_tienda.grafo = graph_json
+                    db_tienda.ancho = int(w)
+                    db_tienda.alto = int(h)
+
+                # Relacionar productos cuyo vendedor coincida con el nombre de la tienda
+                products = session.query(Product).filter(
+                    Product.vendido_por.ilike(store_name)
+                ).all()
+                for p in products:
+                    if db_tienda not in p.tiendas:
+                        p.tiendas.append(db_tienda)
+
+                session.commit()
+                session.close()
+            except Exception as db_err:
+                print(f"Error persisting tienda in V2: {db_err}")
+
             return JSONResponse(
                 content={
                     "status": "success",

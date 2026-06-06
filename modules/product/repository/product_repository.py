@@ -45,7 +45,8 @@ class ProductRepository:
             products = session.query(Product, similarity_score).join(Product.imagenes).order_by(
                     similarity_score.desc()
             ).limit(top_k).options(
-                    joinedload(Product.imagenes)
+                    joinedload(Product.imagenes),
+                    joinedload(Product.tiendas)
                 ).all()
             
             products_res = []
@@ -66,7 +67,8 @@ class ProductRepository:
             products = session.query(Product, similarity_score).order_by(
                     similarity_score.desc()
             ).limit(top_k).options(
-                    joinedload(Product.imagenes)
+                    joinedload(Product.imagenes),
+                    joinedload(Product.tiendas)
                 ).all()
             
             products_res = []
