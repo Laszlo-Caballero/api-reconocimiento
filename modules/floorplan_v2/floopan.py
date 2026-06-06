@@ -4,9 +4,10 @@ import math
 import json
 import re
 import os
+import base64
+import requests
 from PIL import Image
 from fastapi import UploadFile
-import ollama
 import networkx as nx
 from pyvis.network import Network
 
@@ -43,6 +44,12 @@ class FloorPan:
         "garage":       ( 90,  94,  95),
         "other":        (169, 178, 180),
     }
+    
+    # Coloca aquí tu endpoint de ngrok
+    NGROK_ENDPOINT = " https://9c15-179-7-16-89.ngrok-free.app"
+    
+    
+    
 
     def _bgr_to_hex(self, bgr: tuple) -> str:
         b, g, r = bgr
@@ -297,47 +304,40 @@ class FloorPan:
     #  5. Clasificación con Qwen2.5-VL (Ollama)                          #
     # ------------------------------------------------------------------ #
     def classify_rooms_with_ai(self, image_bytes: bytes, rooms_data: list) -> dict:
+        # Formatear los rooms_data para el payload del servidor
         rooms_summary = [
             {
-                "id":       r["id"],
-                "area_px":  int(r["area"]),
+                "id": r["id"],
+                "area": float(r["area"]),
                 "centroid": list(r["centroid"]),
-                "bbox":     list(r["bbox"]),
-                "color_zone": r.get("color_tag", "unknown"),
+                "bbox": list(r["bbox"]),
+                "color_tag": r.get("color_tag", "unknown")
             }
             for r in rooms_data
         ]
 
-        prompt = (
-            f"This is a floor plan image (plano de oficina / evacuación).\n"
-            f"Computer vision detected {len(rooms_data)} interior spaces.\n\n"
-            f"Regions — id, area_px, centroid [x,y], bbox [x,y,w,h], color_zone:\n"
-            f"{json.dumps(rooms_summary, indent=2)}\n\n"
-            f"'color_zone' hints: zone_red=ruta/zona roja de evacuación, "
-            f"zone_blue=ruta/zona azul, gray=espacio neutro.\n\n"
-            f"Instructions:\n"
-            f"1. Identify each space by its position, size and color_zone.\n"
-            f"2. Assign a Spanish name ('Oficina A', 'Baño', 'Pasillo', 'Sala de reuniones', etc.).\n"
-            f"3. Assign a type: office | meeting_room | bathroom | hallway | "
-            f"reception | storage | staircase | open_space | other.\n"
-            f"4. List connected region IDs (share a door/corridor).\n"
-            f"5. Estimate real area in m².\n\n"
-            f"Respond ONLY with valid JSON, no markdown:\n"
-            f'{{"rooms":[{{"id":0,"name":"...","type":"...","estimated_sqm":0,"connections":[]}}]}}'
-        )
+        payload = {
+            "image_base64": base64.b64encode(image_bytes).decode(),
+            "rooms_data": rooms_summary
+        }
 
-        response = ollama.chat(
-            model="qwen2.5vl:7b",
-            messages=[{
-                "role":    "user",
-                "content": prompt,
-                "images":  [image_bytes],
-            }],
-            options={"temperature": 0.05, "num_predict": 2500},
-        )
-
-        raw    = response["message"]["content"].strip()
-        result = self._safe_parse(raw)
+        try:
+            url = f"{self.NGROK_ENDPOINT.rstrip('/')}/classify-rooms"
+            print(f"[classify_rooms_with_ai] Enviando petición a {url}...")
+            response = requests.post(
+                url,
+                json=payload,
+                timeout=300
+            )
+            response.raise_for_status()
+            resp_json = response.json()
+            
+            # El endpoint de la API retorna: {"status": "success", "data": "..."}
+            raw = resp_json.get("data", "").strip()
+            result = self._safe_parse(raw)
+        except Exception as e:
+            print(f"[ERROR] Error al clasificar cuartos vía ngrok: {e}")
+            result = {"rooms": []}
 
         # Fallback: rellenar IDs no devueltos por la IA
         ai_ids = {r["id"] for r in result.get("rooms", [])}

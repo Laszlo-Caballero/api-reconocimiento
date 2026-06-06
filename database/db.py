@@ -3,6 +3,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 import os
 from pgvector.sqlalchemy import Vector
+from dotenv import load_dotenv
+
+load_dotenv()
 
 @singleton
 class PostgreDatabase:
