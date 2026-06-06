@@ -13,6 +13,9 @@ service = FloorplanService()
 @router.post("/analyze", status_code=status.HTTP_200_OK)
 def analyze_floorplan(
     file: UploadFile,
+    open_space_threshold: int = Query(30, description="Radio mínimo para detectar espacios abiertos"),
+    min_node_distance: int = Query(20, description="Distancia mínima entre nodos"),
+    door_close_kernel: int = Query(0, description="Tamaño del kernel en px para cerrar puertas (0 = automático)")
 ):
     """
     Analiza una imagen de plano de planta y genera un grafo de navegación.

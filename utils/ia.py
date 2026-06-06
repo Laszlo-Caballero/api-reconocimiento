@@ -1,6 +1,6 @@
 import torch
 import clip
-from decorator.singleton import singleton
+from decorators.singleton import singleton
 
 @singleton
 class IA:

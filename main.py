@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from excepts.handle import register_exception_handlers
 from modules.product.product_controller import router as product_router
 from modules.floorplan.floorplan_controller import router as floorplan_router
+from modules.floorplan_v2.floopan_v2_controller import router as floorplan_v2_router
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
@@ -35,5 +36,6 @@ app.add_middleware(
 
 app.include_router(product_router)
 app.include_router(floorplan_router)
+app.include_router(floorplan_v2_router)
 
     

@@ -1,4 +1,4 @@
-from decorator.singleton import singleton
+from decorators.singleton import singleton
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 import os
