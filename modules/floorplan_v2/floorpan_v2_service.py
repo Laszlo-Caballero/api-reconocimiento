@@ -1,7 +1,7 @@
 import cv2
-import numpy as np
 import uuid
 import os
+from io import BytesIO
 from pathlib import Path
 from PIL import Image
 from fastapi import UploadFile
@@ -14,78 +14,81 @@ class FloorpanV2Service:
     def __init__(self):
         self.images_dir = Path(__file__).resolve().parent.parent.parent / "images" / "floorplan"
         self.images_dir.mkdir(parents=True, exist_ok=True)
-        self.floorpan_tool = FloorPan()
+        self.tool = FloorPan()
 
-    def analyze_floorplan(self, file: UploadFile):
+    def analyze_floorplan(self, file: UploadFile) -> JSONResponse:
         try:
-            # 1. Cargar imagen y preprocess
+            # --- Leer bytes una sola vez ---
             file_bytes = file.file.read()
-            # Reset file pointer in case it's read again
             file.file.seek(0)
-            
-            # Cargar con PIL
-            from io import BytesIO
+
             pil_img = Image.open(BytesIO(file_bytes))
-            
-            img_bgr, img_gray, processed = self.floorpan_tool.preprocess_image(pil_img)
-            
-            # 2. Detectar cuartos
-            rooms_cv = self.floorpan_tool.detect_rooms(processed, img_bgr)
-            
+
+            # 1. Preprocesar  (ahora devuelve 4 valores)
+            img_bgr, img_gray, walls_mask, plan_type = self.tool.preprocess_image(pil_img)
+
+            # 2. Detectar cuartos  (plan_type necesario para elegir algoritmo)
+            rooms_cv = self.tool.detect_rooms(walls_mask, img_bgr, plan_type)
+
+            # Guardar debug antes de llamar a la IA
+            debug_path = str(self.images_dir / f"debug_{uuid.uuid4().hex[:6]}.png")
+            self.tool.save_debug_image(img_bgr, rooms_cv, debug_path)
+
             # 3. Clasificar con IA
-            rooms_ai = self.floorpan_tool.classify_rooms_with_ai(file_bytes, rooms_cv)
-            
+            rooms_ai = self.tool.classify_rooms_with_ai(file_bytes, rooms_cv)
+
             # 4. Construir grafo
-            G = self.floorpan_tool.build_floor_graph(rooms_cv, rooms_ai)
-            
-            # 5. Generar imagen anotada
-            result_img = self.floorpan_tool.overlay_on_image(img_bgr, rooms_cv, G)
-            
+            G = self.tool.build_floor_graph(rooms_cv, rooms_ai)
+
+            # 5. Imagen anotada
+            result_img   = self.tool.overlay_on_image(img_bgr, rooms_cv, G)
             viz_filename = f"result_v2_{uuid.uuid4().hex[:8]}.png"
-            viz_path = self.images_dir / viz_filename
+            viz_path     = self.images_dir / viz_filename
             cv2.imwrite(str(viz_path), result_img)
-            
+
             # Obtener dimensiones de la imagen
             w, h = pil_img.size
 
-            # Convertir NetworkX G a formato serializable
-            nodes = []
-            for node_id, data in G.nodes(data=True):
-                nodes.append({
-                    "id": int(node_id),
-                    "name": data.get("name"),
-                    "type": data.get("type"),
-                    "area": float(data.get("area")),
-                    "centroid": [int(data.get("centroid")[0]), int(data.get("centroid")[1])],
-                    "sqm": float(data.get("sqm", 0))
-                })
-                
-            edges = []
-            for u, v, data in G.edges(data=True):
-                edges.append({
-                    "source": int(u),
-                    "target": int(v),
-                    "weight": float(data.get("weight", 1)),
-                    "connection_type": data.get("connection_type", "door")
-                })
-                
+            # 6. Serializar grafo
+            nodes = [
+                {
+                    "id":       int(nid),
+                    "name":     d.get("name"),
+                    "type":     d.get("type"),
+                    "area":     float(d.get("area", 0)),
+                    "centroid": [int(d["centroid"][0]), int(d["centroid"][1])],
+                    "sqm":      float(d.get("sqm", 0)),
+                }
+                for nid, d in G.nodes(data=True)
+            ]
+            edges = [
+                {
+                    "source":          int(u),
+                    "target":          int(v),
+                    "weight":          float(d.get("weight", 1)),
+                    "connection_type": d.get("connection_type", "proximity"),
+                }
+                for u, v, d in G.edges(data=True)
+            ]
             summary = {
-                "total_nodes": len(nodes),
-                "total_edges": len(edges),
-                "rooms": sum(1 for n in nodes if n["type"] not in ["hallway", "other"]),
-                "corridors": sum(1 for n in nodes if n["type"] == "hallway"),
-                "open_spaces": sum(1 for n in nodes if n["type"] == "other")
+                "plan_type":    plan_type,
+                "total_nodes":  len(nodes),
+                "total_edges":  len(edges),
+                "rooms":        sum(1 for n in nodes if n["type"] not in ["hallway","other","open_space"]),
+                "corridors":    sum(1 for n in nodes if n["type"] == "hallway"),
+                "open_spaces":  sum(1 for n in nodes if n["type"] in ["open_space","other"]),
             }
-            
+
             response_data = {
-                "nodes": nodes,
-                "edges": edges,
-                "summary": summary,
-                "visualization_url": f"/images/floorplan/{viz_filename}",
-                "width": int(w),
-                "height": int(h)
+                "nodes":              nodes,
+                "edges":              edges,
+                "summary":            summary,
+                "visualization_url":  f"/images/floorplan/{viz_filename}",
+                "debug_url":          f"/images/floorplan/{Path(debug_path).name}",
+                "width":              int(w),
+                "height":             int(h)
             }
-            
+
             # Guardar en base de datos (PostgreSQL)
             try:
                 from database.db import PostgreDatabase
@@ -99,7 +102,8 @@ class FloorpanV2Service:
                     "nodes": nodes,
                     "edges": edges,
                     "width": int(w),
-                    "height": int(h)
+                    "height": int(h),
+                    "plan_type": plan_type
                 }
 
                 store_name = Path(file.filename).stem.replace("_", " ").replace("-", " ").strip()
@@ -140,20 +144,21 @@ class FloorpanV2Service:
 
             return JSONResponse(
                 content={
-                    "status": "success",
-                    "message": "Grafo V2 generado exitosamente con Qwen2.5-VL y OpenCV",
-                    "data": jsonable_encoder(response_data)
+                    "status":  "success",
+                    "message": f"Grafo V2 generado ({plan_type}) con Qwen2.5-VL + OpenCV",
+                    "data":    jsonable_encoder(response_data),
                 },
-                status_code=200
+                status_code=200,
             )
-            
-        except Exception as e:
-            print(f"Error in FloorpanV2Service.analyze_floorplan: {e}")
+
+        except Exception as exc:
+            import traceback
+            print(traceback.format_exc())
             return JSONResponse(
                 content={
-                    "status": "error",
-                    "message": f"Error procesando el plano: {str(e)}",
-                    "data": None
+                    "status":  "error",
+                    "message": f"Error procesando el plano: {str(exc)}",
+                    "data":    None,
                 },
-                status_code=500
+                status_code=500,
             )
