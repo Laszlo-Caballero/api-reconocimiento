@@ -6,6 +6,9 @@ from excepts.handle import register_exception_handlers
 from modules.product.product_controller import router as product_router
 from modules.floorplan_v2.floopan_v2_controller import router as floorplan_v2_router
 from modules.store.tienda_controller import router as tienda_router
+from modules.auth.auth_controller import router as auth_router
+from modules.history.history_controller import router as history_router
+from modules.notification.notification_controller import router as notification_router
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
@@ -34,8 +37,12 @@ app.add_middleware(
     allow_headers=["*"]
 )
 
+app.include_router(auth_router)
 app.include_router(product_router)
 app.include_router(floorplan_v2_router)
 app.include_router(tienda_router)
+app.include_router(history_router)
+app.include_router(notification_router)
+
 
     

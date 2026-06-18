@@ -18,6 +18,12 @@ class ProductController:
     @router.post("/identify", status_code=status.HTTP_200_OK)
     def identify_product_by_image(self, file: UploadFile):
             return self.service.find_product_by_image_vector(file)
+            
     @router.post("/voice", status_code=status.HTTP_200_OK)
     def get_products_by_voice(self, body: VoiceQueryDTO):
             return self.service.find_products_by_voice(body.query)
+
+    @router.get("/", status_code=status.HTTP_200_OK)
+    def list_and_search_products(self, query: str = None):
+        return self.service.search_products(query)
+

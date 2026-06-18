@@ -37,3 +37,18 @@ class ProductService:
                 "message": "Productos encontrados exitosamente",
                 "status": "success"
             }, status_code=200)
+
+    def search_products(self, query: Optional[str]):
+        try:
+            products = self.repository.get_products_filtered(query)
+            return JSONResponse(content={
+                "status": "success",
+                "message": "Búsqueda de catálogo realizada con éxito",
+                "data": jsonable_encoder(products)
+            }, status_code=200)
+        except Exception as e:
+            return JSONResponse(content={
+                "status": "error",
+                "message": f"Error interno al realizar búsqueda de catálogo: {str(e)}",
+                "data": None
+            }, status_code=500)

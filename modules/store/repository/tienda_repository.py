@@ -8,10 +8,13 @@ class TiendaRepository:
     def __init__(self):
         self.db = PostgreDatabase()
 
-    def get_all_tiendas(self) -> List[TiendaResponse]:
+    def get_all_tiendas(self, seller_name: str = None) -> List[TiendaResponse]:
         session = self.db.get_session()
         try:
-            tiendas = session.query(Tienda).all()
+            q = session.query(Tienda)
+            if seller_name:
+                q = q.filter(Tienda.nombre.ilike(f"%{seller_name}%"))
+            tiendas = q.all()
             return [TiendaResponse.from_entity(t) for t in tiendas]
         finally:
             session.close()

@@ -21,8 +21,8 @@ class TiendaController:
         self.service = TiendaService()
 
     @router.get("/", status_code=status.HTTP_200_OK)
-    def list_stores(self):
-        return self.service.list_tiendas()
+    def list_stores(self, seller_name: str = None):
+        return self.service.list_tiendas(seller_name)
 
     @router.patch("/{store_id}/location", status_code=status.HTTP_200_OK)
     def update_store_location(self, store_id: int, body: UpdateTiendaLocationDTO):

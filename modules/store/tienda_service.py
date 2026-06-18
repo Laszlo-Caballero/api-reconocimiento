@@ -7,9 +7,9 @@ class TiendaService:
     def __init__(self):
         self.repository = TiendaRepository()
 
-    def list_tiendas(self):
+    def list_tiendas(self, seller_name: str = None):
         try:
-            tiendas = self.repository.get_all_tiendas()
+            tiendas = self.repository.get_all_tiendas(seller_name)
             return JSONResponse(content={
                 "data": jsonable_encoder(tiendas),
                 "message": "Tiendas listadas exitosamente",
