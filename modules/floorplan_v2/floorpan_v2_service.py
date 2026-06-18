@@ -1,13 +1,23 @@
+import sys
+from pathlib import Path
+
+# Asegurar que el directorio raíz del proyecto está en sys.path
+project_root = str(Path(__file__).resolve().parent.parent.parent)
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
 import cv2
 import uuid
 import os
 from io import BytesIO
-from pathlib import Path
 from PIL import Image
 from fastapi import UploadFile
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 from modules.floorplan_v2.floopan import FloorPan
+from database.db import PostgreDatabase
+from modules.product.models.tienda import Tienda
+from modules.product.models.product import Product
 
 
 class FloorpanV2Service:
@@ -93,9 +103,6 @@ class FloorpanV2Service:
 
             # Guardar en base de datos (PostgreSQL)
             try:
-                from database.db import PostgreDatabase
-                from modules.product.models.tienda import Tienda
-                from modules.product.models.product import Product
 
                 db = PostgreDatabase()
                 session = db.get_session()

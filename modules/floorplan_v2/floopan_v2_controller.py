@@ -1,8 +1,15 @@
+import sys
+from pathlib import Path
+
+# Asegurar que el directorio raíz del proyecto está en sys.path
+project_root = str(Path(__file__).resolve().parent.parent.parent)
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
 from fastapi import APIRouter, UploadFile, status
 from modules.floorplan_v2.floorpan_v2_service import FloorpanV2Service
-from utils.celery_app import celery_app
+from celery_app import celery_app
 import uuid
-from pathlib import Path
 import redis
 import json
 
@@ -79,19 +86,25 @@ def get_analysis_result(task_id: str):
 @router.get("/all_tasks", status_code=status.HTTP_200_OK)
 def get_all_tasks():
     tasks = []
-    
-    # Celery guarda tareas con el prefijo 'celery-task-meta-'
-    keys = r.keys("celery-task-meta-*")
-    
-    for key in keys:
-        raw = r.get(key)
-        if raw:
-            data = json.loads(raw)
-            tasks.append({
-                "task_id": key.decode().replace("celery-task-meta-", ""),
-                "status": data.get("status"),
-                "result": data.get("result"),
-                "traceback": data.get("traceback"),
-            })
+    try:
+        keys = r.keys("celery-task-meta-*")
+        for key in keys:
+            raw = r.get(key)
+            if raw:
+                data = json.loads(raw)
+                task_id = key.decode().replace("celery-task-meta-", "")
+                
+                # Evitar duplicados si ya la agregamos
+                if not any(t["task_id"] == task_id for t in tasks):
+                    tasks.append({
+                        "task_id": task_id,
+                        "task_name": "analyze_floorplan_service",
+                        "status": data.get("status"),
+                        "args": None,
+                        "result": data.get("result"),
+                        "traceback": data.get("traceback"),
+                    })
+    except Exception as meta_err:
+        print(f"Error reading task metadata keys: {meta_err}")
     
     return {"tasks": tasks, "total": len(tasks)}
