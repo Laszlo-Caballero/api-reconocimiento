@@ -12,7 +12,7 @@ services:
       - DATABASE_NAME=productos
       - DATABASE_USER=admin
       - DATABASE_PASSWORD=admin123
-      - REDIS_HOST=host.docker.internal
+      - REDIS_HOST=161.132.49.206
       - REDIS_PORT=6379
       - REDIS_DB=0
       - REDIS_USER=default
@@ -32,7 +32,7 @@ services:
       - DATABASE_NAME=productos
       - DATABASE_USER=admin
       - DATABASE_PASSWORD=admin123
-      - REDIS_HOST=host.docker.internal
+      - REDIS_HOST=161.132.49.206
       - REDIS_PORT=6379
       - REDIS_DB=0
       - REDIS_USER=default
