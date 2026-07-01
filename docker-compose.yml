@@ -5,7 +5,7 @@ services:
     build: .
     container_name: fastapi-app
     ports:
-      - "8000:8000"
+      - "8000"
     environment:
       - DATABASE_HOST=host.docker.internal
       - DATABASE_PORT=5432
