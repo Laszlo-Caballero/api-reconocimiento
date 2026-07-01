@@ -21,8 +21,22 @@ router = APIRouter(
 service = FloorpanV2Service()
 
 import os
-redis_host = os.getenv("REDIS_HOST", "localhost")
-r = redis.Redis(host=redis_host, port=6379, db=0)
+redis_url = os.getenv("REDIS_URL")
+if redis_url:
+    r = redis.Redis.from_url(redis_url)
+else:
+    redis_host = os.getenv("REDIS_HOST", "localhost")
+    redis_port = int(os.getenv("REDIS_PORT", 6379))
+    redis_db = int(os.getenv("REDIS_DB", 0))
+    redis_user = os.getenv("REDIS_USER", None) or None
+    redis_password = os.getenv("REDIS_PASSWORD", None) or None
+    r = redis.Redis(
+        host=redis_host,
+        port=redis_port,
+        db=redis_db,
+        username=redis_user,
+        password=redis_password
+    )
 
 @celery_app.task
 def analyze_floorplan_service(file_path: str, original_filename: str):

@@ -33,7 +33,10 @@ services:
       - DATABASE_USER=admin
       - DATABASE_PASSWORD=admin123
       - REDIS_HOST=host.docker.internal
-      - REDIS_URL=redis://host.docker.internal:6379/0
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - REDIS_USER=default
+      - REDIS_PASSWORD=123
       - OPENAI_API_KEY=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
       - OPENAI_BASE_URL=https://integrate.api.nvidia.com/v1
       - OPENAI_MODEL=deepseek-ai/deepseek-v4-flash
@@ -53,7 +56,10 @@ services:
       - DATABASE_USER=admin
       - DATABASE_PASSWORD=admin123
       - REDIS_HOST=host.docker.internal
-      - REDIS_URL=redis://host.docker.internal:6379/0
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - REDIS_USER=default
+      - REDIS_PASSWORD=123
       - OPENAI_API_KEY=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
       - OPENAI_BASE_URL=https://integrate.api.nvidia.com/v1
       - OPENAI_MODEL=deepseek-ai/deepseek-v4-flash
