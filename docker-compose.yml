@@ -21,6 +21,8 @@ services:
       - OPENAI_BASE_URL=https://integrate.api.nvidia.com/v1
       - OPENAI_MODEL=deepseek-ai/deepseek-v4-flash
     restart: unless-stopped
+    volumes:
+      - shared-images:/app/images
 
   worker:
     build: .
@@ -41,3 +43,8 @@ services:
       - OPENAI_BASE_URL=https://integrate.api.nvidia.com/v1
       - OPENAI_MODEL=deepseek-ai/deepseek-v4-flash
     restart: unless-stopped
+    volumes:
+      - shared-images:/app/images
+
+volumes:
+  shared-images:
