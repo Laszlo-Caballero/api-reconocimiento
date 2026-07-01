@@ -9,6 +9,7 @@ from modules.store.tienda_controller import router as tienda_router
 from modules.auth.auth_controller import router as auth_router
 from modules.history.history_controller import router as history_router
 from modules.notification.notification_controller import router as notification_router
+from modules.promotion.promotion_controller import router as promotion_router
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
@@ -43,6 +44,8 @@ app.include_router(floorplan_v2_router)
 app.include_router(tienda_router)
 app.include_router(history_router)
 app.include_router(notification_router)
+app.include_router(promotion_router)
+
 
 
 @app.get("/health")

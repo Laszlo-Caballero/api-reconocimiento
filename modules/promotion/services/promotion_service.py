@@ -1,0 +1,139 @@
+import os
+import uuid
+import requests
+from fastapi.responses import JSONResponse
+from fastapi.encoders import jsonable_encoder
+from fastapi import UploadFile
+from modules.promotion.repository.promotion_repository import PromotionRepository
+from modules.promotion.models.promotion_model import Promotion
+from modules.promotion.dto.promotion_dto import PromotionCreateDTO
+from pathlib import Path
+
+
+class PromotionService:
+    def __init__(self):
+        self.repository = PromotionRepository()
+        
+        # Absolute path to store images
+        self.base_dir = Path(__file__).resolve().parent.parent.parent.parent
+        self.promo_dir = self.base_dir / "images" / "promotions"
+        os.makedirs(self.promo_dir, exist_ok=True)
+
+    def list_promotions(self):
+        try:
+            promotions = self.repository.get_all_promotions()
+            return JSONResponse(content={
+                "status": "success",
+                "message": "Promociones recuperadas con éxito",
+                "data": jsonable_encoder(promotions)
+            }, status_code=200)
+        except Exception as e:
+            return JSONResponse(content={
+                "status": "error",
+                "message": f"Error al recuperar promociones: {str(e)}"
+            }, status_code=500)
+
+    def create_promotion_with_qr_data(self, dto: PromotionCreateDTO):
+        try:
+            # Generate QR code if qr_data is provided, else empty string or a default
+            qr_content = dto.qr_data if dto.qr_data else dto.title
+            
+            # Generate a unique name for the QR code image
+            filename = f"qr_{uuid.uuid4().hex}.png"
+            filepath = self.promo_dir / filename
+            
+            # Request QR code from free API
+            qr_api_url = f"https://api.qrserver.com/v1/create-qr-code/?size=300x300&data={requests.utils.quote(qr_content)}"
+            response = requests.get(qr_api_url)
+            if response.status_code == 200:
+                with open(filepath, "wb") as f:
+                    f.write(response.content)
+            else:
+                raise Exception("Error al generar el código QR con el servicio externo.")
+
+            # Construct public URL
+            qr_code_url = f"/images/promotions/{filename}"
+
+            promotion = Promotion(
+                title=dto.title,
+                description=dto.description,
+                discount_code=dto.discount_code,
+                qr_code_url=qr_code_url
+            )
+            created = self.repository.create_promotion(promotion)
+            return JSONResponse(content={
+                "status": "success",
+                "message": "Promoción creada y código QR generado con éxito",
+                "data": jsonable_encoder(created)
+            }, status_code=201)
+        except Exception as e:
+            return JSONResponse(content={
+                "status": "error",
+                "message": f"Error al crear promoción: {str(e)}"
+            }, status_code=500)
+
+    def create_promotion_with_upload(self, title: str, description: str = None, discount_code: str = None, file: UploadFile = None):
+        try:
+            if not file:
+                return JSONResponse(content={
+                    "status": "error",
+                    "message": "Se requiere subir una imagen de código QR."
+                }, status_code=400)
+
+            # Generate unique filename for the uploaded file
+            extension = file.filename.split(".")[-1]
+            filename = f"custom_{uuid.uuid4().hex}.{extension}"
+            filepath = self.promo_dir / filename
+
+            # Read and save uploaded file
+            contents = file.file.read()
+            with open(filepath, "wb") as f:
+                f.write(contents)
+
+            # Construct public URL
+            qr_code_url = f"/images/promotions/{filename}"
+
+            promotion = Promotion(
+                title=title,
+                description=description,
+                discount_code=discount_code,
+                qr_code_url=qr_code_url
+            )
+            created = self.repository.create_promotion(promotion)
+            return JSONResponse(content={
+                "status": "success",
+                "message": "Promoción con QR personalizado creada con éxito",
+                "data": jsonable_encoder(created)
+            }, status_code=201)
+        except Exception as e:
+            return JSONResponse(content={
+                "status": "error",
+                "message": f"Error al subir promoción: {str(e)}"
+            }, status_code=500)
+
+    def delete_promotion(self, id: int):
+        try:
+            # Optionally delete the file on disk
+            promo = self.repository.get_promotion_by_id(id)
+            if promo:
+                filename = promo.qr_code_url.split("/")[-1]
+                filepath = self.promo_dir / filename
+                if os.path.exists(filepath):
+                    os.remove(filepath)
+
+            success = self.repository.delete_promotion(id)
+            if not success:
+                return JSONResponse(content={
+                    "status": "error",
+                    "message": "La promoción especificada no existe."
+                }, status_code=404)
+
+            return JSONResponse(content={
+                "status": "success",
+                "message": "Promoción eliminada con éxito"
+            }, status_code=200)
+        except Exception as e:
+            return JSONResponse(content={
+                "status": "error",
+                "message": f"Error al eliminar promoción: {str(e)}"
+            }, status_code=500)

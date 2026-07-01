@@ -4,8 +4,10 @@ Utilidades para inicializar la base de datos
 from database.db import PostgreDatabase
 from modules.product.models.product import Product
 from modules.product.models.image import ImageData
-from modules.product.models.image_product import ImageProduct
 from modules.product.models.tienda import Tienda
+from modules.promotion.models.promotion_model import Promotion
+
+
 
 
 
