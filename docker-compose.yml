@@ -7,7 +7,7 @@ services:
     ports:
       - "8000"
     environment:
-      - DATABASE_HOST=host.docker.internal
+      - DATABASE_HOST=161.132.49.206
       - DATABASE_PORT=5432
       - DATABASE_NAME=productos
       - DATABASE_USER=admin
@@ -27,7 +27,7 @@ services:
     container_name: celery-worker
     command: celery -A celery_app.celery_app worker --loglevel=info
     environment:
-      - DATABASE_HOST=host.docker.internal
+      - DATABASE_HOST=161.132.49.206
       - DATABASE_PORT=5432
       - DATABASE_NAME=productos
       - DATABASE_USER=admin
