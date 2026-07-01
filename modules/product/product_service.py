@@ -141,4 +141,73 @@ class ProductService:
                 "status": "error",
                 "message": f"Error interno al realizar búsqueda de catálogo: {str(e)}",
                 "data": None
+            }, status_code=500)
+
+    def create_product(self, dto: ProductCreateDTO):
+        try:
+            vector_nombre = self.ia.to_vector_text(dto.nombre).tolist()
+            product = Product(
+                nombre=dto.nombre,
+                precios=dto.precios,
+                vendido_por=dto.vendido_por,
+                marca=dto.marca,
+                url_venta=dto.url_venta,
+                caracteristicas=dto.caracteristicas,
+                categoria=dto.categoria,
+                sub_categoria=dto.sub_categoria,
+                especificaciones=dto.especificaciones,
+                vector_nombre=vector_nombre
+            )
+            created = self.repository.create_product(product)
+            return JSONResponse(content={
+                "status": "success",
+                "message": "Producto creado con éxito",
+                "data": jsonable_encoder(created)
+            }, status_code=201)
+        except Exception as e:
+            return JSONResponse(content={
+                "status": "error",
+                "message": f"Error al crear el producto: {str(e)}"
+            }, status_code=500)
+
+    def update_product(self, product_id: int, dto: ProductUpdateDTO):
+        try:
+            update_data = {k: v for k, v in dto.model_dump().items() if v is not None}
+            if "nombre" in update_data:
+                vector_nombre = self.ia.to_vector_text(update_data["nombre"]).tolist()
+                update_data["vector_nombre"] = vector_nombre
+                
+            updated = self.repository.update_product(product_id, update_data)
+            if not updated:
+                return JSONResponse(content={
+                    "status": "error",
+                    "message": "El producto especificado no existe."
+                }, status_code=404)
+            return JSONResponse(content={
+                "status": "success",
+                "message": "Producto actualizado con éxito",
+                "data": jsonable_encoder(updated)
+            }, status_code=200)
+        except Exception as e:
+            return JSONResponse(content={
+                "status": "error",
+                "message": f"Error al actualizar el producto: {str(e)}"
+            }, status_code=500)
+
+    def delete_product(self, product_id: int):
+        try:
+            success = self.repository.delete_product(product_id)
+            if not success:
+                return JSONResponse(content={
+                    "status": "error",
+                    "message": "El producto especificado no existe."
+                }, status_code=404)
+            return JSONResponse(content={
+                "status": "success",
+                "message": "Producto eliminado con éxito"
+            }, status_code=200)
+        except Exception as e:
+            return JSONResponse(content={
+                "status": "error",
+                "message": f"Error al eliminar el producto: {str(e)}"
             }, status_code=500)

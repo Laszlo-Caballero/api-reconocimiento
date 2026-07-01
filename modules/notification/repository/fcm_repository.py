@@ -39,3 +39,10 @@ class FCMRepository:
             raise e
         finally:
             session.close()
+
+    def get_all_tokens(self) -> list[FCMToken]:
+        session = self.db.get_session()
+        try:
+            return session.query(FCMToken).all()
+        finally:
+            session.close()

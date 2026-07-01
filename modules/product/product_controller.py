@@ -4,7 +4,7 @@ from modules.product.dto.product_dto import ProductCreateDTO, ProductUpdateDTO, 
 from typing import List
 from fastapi_utils.cbv import cbv
 from .dto.voice_dto import VoiceQueryDTO
-from utils.security import get_current_user
+from utils.security import get_current_user, get_current_admin_user
 from modules.auth.models.user import User
 
 router = APIRouter(
@@ -28,5 +28,17 @@ class ProductController:
     @router.get("/", status_code=status.HTTP_200_OK)
     def list_and_search_products(self, query: str = None, current_user: User = Depends(get_current_user)):
         return self.service.search_products(query, current_user.usuarioid)
+
+    @router.post("/", status_code=status.HTTP_201_CREATED)
+    def create_product(self, body: ProductCreateDTO, current_user: User = Depends(get_current_admin_user)):
+        return self.service.create_product(body)
+
+    @router.put("/{product_id}", status_code=status.HTTP_200_OK)
+    def update_product(self, product_id: int, body: ProductUpdateDTO, current_user: User = Depends(get_current_admin_user)):
+        return self.service.update_product(product_id, body)
+
+    @router.delete("/{product_id}", status_code=status.HTTP_200_OK)
+    def delete_product(self, product_id: int, current_user: User = Depends(get_current_admin_user)):
+        return self.service.delete_product(product_id)
 
 

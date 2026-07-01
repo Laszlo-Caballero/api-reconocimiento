@@ -1,5 +1,5 @@
 import jwt
-from fastapi import Header, HTTPException, status
+from fastapi import Header, HTTPException, status, Depends
 from modules.auth.services.auth_service import SECRET_KEY, ALGORITHM
 from modules.auth.repository.auth_repository import AuthRepository
 from modules.auth.models.user import User
@@ -41,3 +41,12 @@ def get_current_user(authorization: str = Header(...)) -> User:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token inválido"
         )
+
+
+def get_current_admin_user(current_user: User = Depends(get_current_user)) -> User:
+    if not getattr(current_user, "has_dashboard_access", False):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="El usuario no tiene privilegios de acceso para administrar el dashboard."
+        )
+    return current_user
