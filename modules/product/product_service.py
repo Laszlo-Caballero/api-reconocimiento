@@ -97,9 +97,9 @@ class ProductService:
                 "status": "success"
             }, status_code=200)
 
-    def search_products(self, query: Optional[str], user_id: int):
+    def search_products(self, query: Optional[str], user_id: int, page: int = 1, limit: int = 12):
         try:
-            products = self.repository.get_products_filtered(query)
+            products, total = self.repository.get_products_filtered(query, page, limit)
             
             # Save to history if query is not empty and we found products
             if query and products:
@@ -130,12 +130,19 @@ class ProductService:
                     hist_repo.create_history_entry(entry)
                 except Exception as e:
                     print(f"Error saving text search history: {e}")
-
+ 
             return JSONResponse(content={
                 "status": "success",
                 "message": "Búsqueda de catálogo realizada con éxito",
-                "data": jsonable_encoder(products)
+                "data": {
+                    "products": jsonable_encoder(products),
+                    "total": total,
+                    "page": page,
+                    "limit": limit,
+                    "total_pages": (total + limit - 1) // limit if limit > 0 else 1
+                }
             }, status_code=200)
+
         except Exception as e:
             return JSONResponse(content={
                 "status": "error",

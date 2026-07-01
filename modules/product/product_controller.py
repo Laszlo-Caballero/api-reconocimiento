@@ -26,8 +26,9 @@ class ProductController:
             return self.service.find_products_by_voice(body.query, current_user.usuarioid)
 
     @router.get("/", status_code=status.HTTP_200_OK)
-    def list_and_search_products(self, query: str = None, current_user: User = Depends(get_current_user)):
-        return self.service.search_products(query, current_user.usuarioid)
+    def list_and_search_products(self, query: str = None, page: int = 1, limit: int = 12, current_user: User = Depends(get_current_user)):
+        return self.service.search_products(query, current_user.usuarioid, page, limit)
+
 
     @router.post("/", status_code=status.HTTP_201_CREATED)
     def create_product(self, body: ProductCreateDTO, current_user: User = Depends(get_current_admin_user)):
