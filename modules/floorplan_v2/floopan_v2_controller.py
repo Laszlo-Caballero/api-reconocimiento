@@ -20,7 +20,9 @@ router = APIRouter(
 
 service = FloorpanV2Service()
 
-r = redis.Redis(host='localhost', port=6379, db=0)
+import os
+redis_host = os.getenv("REDIS_HOST", "localhost")
+r = redis.Redis(host=redis_host, port=6379, db=0)
 
 @celery_app.task
 def analyze_floorplan_service(file_path: str, original_filename: str):

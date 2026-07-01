@@ -62,3 +62,4 @@ websockets==15.0.1
 opencv-python==4.13.0.92
 scikit-image==0.25.2
 matplotlib==3.10.9
+openai>=1.0.0

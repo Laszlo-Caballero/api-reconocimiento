@@ -6,9 +6,11 @@ project_root = str(Path(__file__).resolve().parent.parent)
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
+import os
 from celery import Celery
 
-celery_app = Celery("tasks", broker="redis://localhost:6379/0", backend="redis://localhost:6379/0")
+redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+celery_app = Celery("tasks", broker=redis_url, backend=redis_url)
 
 celery_app.conf.worker_concurrency = 1
 celery_app.conf.worker_prefetch_multiplier = 1
