@@ -45,4 +45,10 @@ app.include_router(history_router)
 app.include_router(notification_router)
 
 
+@app.get("/health")
+def health_check():
+    return {"status": "healthy"}
+
+
+
     
