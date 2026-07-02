@@ -31,7 +31,7 @@ class FCMService:
             tokens = self.repository.get_all_tokens()
             data = [
                 {
-                    "token_id": t.token_id,
+                    "token_id": t.id,
                     "usuarioid": t.usuarioid,
                     "token": t.token,
                     "platform": t.platform
