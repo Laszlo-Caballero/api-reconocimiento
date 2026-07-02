@@ -1,3 +1,5 @@
+import os
+os.environ["TORCH_ONEDNN_OPTS"] = "0"
 import torch
 import clip
 from decorators.singleton import singleton
