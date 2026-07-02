@@ -16,6 +16,7 @@ def init_firebase():
     
     cred_path = os.getenv("FIREBASE_CREDENTIALS_PATH", "firebase-credentials.json")
     
+    logger.info(f"[FIREBASE] Credenciales: {cred_path}")
     # Try to load from file first
     if os.path.exists(cred_path):
         try:
