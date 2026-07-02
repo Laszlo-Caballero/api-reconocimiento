@@ -51,17 +51,18 @@ class PromotionController:
 
     @router.post("/surprises", status_code=status.HTTP_201_CREATED)
     def create_surprise_promotion(self, body: SurprisePromotionCreateDTO, current_user: User = Depends(get_current_admin_user)):
-        return self.service.create_surprise_promotion_with_qr_data(body.title, body.description, body.qr_data)
+        return self.service.create_surprise_promotion_with_qr_data(body.title, body.description, body.qr_data, body.promotion_id)
 
     @router.post("/surprises/upload", status_code=status.HTTP_201_CREATED)
     def create_surprise_promotion_upload(
         self,
         title: str = Form(...),
         description: Optional[str] = Form(None),
+        promotion_id: int = Form(...),
         file: UploadFile = File(...),
         current_user: User = Depends(get_current_admin_user)
     ):
-        return self.service.create_surprise_promotion_with_upload(title, description, file)
+        return self.service.create_surprise_promotion_with_upload(title, description, file, promotion_id)
 
     @router.delete("/surprises/{id}", status_code=status.HTTP_200_OK)
     def delete_surprise_promotion(self, id: int, current_user: User = Depends(get_current_admin_user)):

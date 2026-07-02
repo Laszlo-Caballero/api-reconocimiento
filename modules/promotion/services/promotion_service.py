@@ -227,7 +227,7 @@ class PromotionService:
                 "message": f"Error al recuperar promociones sorpresa: {str(e)}"
             }, status_code=500)
 
-    def create_surprise_promotion_with_qr_data(self, title: str, description: str = None, qr_data: str = None):
+    def create_surprise_promotion_with_qr_data(self, title: str, description: str = None, qr_data: str = None, promotion_id: int = 1):
         try:
             qr_content = qr_data if qr_data else title
             filename = f"surprise_qr_{uuid.uuid4().hex}.png"
@@ -246,7 +246,8 @@ class PromotionService:
             surprise = SurprisePromotion(
                 title=title,
                 description=description,
-                qr_code_url=qr_code_url
+                qr_code_url=qr_code_url,
+                promotion_id=promotion_id
             )
             created = self.repository.create_surprise_promotion(surprise)
             return JSONResponse(content={
@@ -260,7 +261,7 @@ class PromotionService:
                 "message": f"Error al crear promoción sorpresa: {str(e)}"
             }, status_code=500)
 
-    def create_surprise_promotion_with_upload(self, title: str, description: str = None, file: UploadFile = None):
+    def create_surprise_promotion_with_upload(self, title: str, description: str = None, file: UploadFile = None, promotion_id: int = 1):
         try:
             if not file:
                 return JSONResponse(content={
@@ -281,7 +282,8 @@ class PromotionService:
             surprise = SurprisePromotion(
                 title=title,
                 description=description,
-                qr_code_url=qr_code_url
+                qr_code_url=qr_code_url,
+                promotion_id=promotion_id
             )
             created = self.repository.create_surprise_promotion(surprise)
             return JSONResponse(content={
