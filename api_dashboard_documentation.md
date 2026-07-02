@@ -112,6 +112,46 @@ Esta documentación detalla todos los endpoints disponibles en la API del sistem
   ]
   ```
 
+### Chatbot de Búsqueda de Productos (DeepSeek)
+* **Ruta**: `POST /api/products/chat`
+* **Descripción**: Conversación interactiva con un chatbot de DeepSeek para buscar y recomendar productos.
+* **Cuerpo de Petición (JSON)**:
+  ```json
+  {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Hola, ¿tienen zapatillas rojas?"
+      }
+    ]
+  }
+  ```
+* **Respuesta**:
+  ```json
+  {
+    "status": "success",
+    "message": "Respuesta de chatbot generada con éxito",
+    "data": {
+      "response": "¡Hola! Sí, tenemos las siguientes zapatillas rojas disponibles...",
+      "products": [
+        {
+          "productoId": 12,
+          "nombre": "Zapatillas Nike Pegasus 40",
+          "precios": [120.0],
+          "marca": "Nike",
+          "vendido_por": "Plaza Vea",
+          "url_venta": "...",
+          "caracteristicas": ["Color rojo"],
+          "categoria": "Deportes",
+          "sub_categoria": "Zapatillas",
+          "especificaciones": [],
+          "imagenes": []
+        }
+      ]
+    }
+  }
+  ```
+
 ### Crear Producto
 * **Ruta**: `POST /api/products/`
 * **Descripción**: Crea un nuevo producto y calcula automáticamente su vector de texto para búsquedas semánticas.

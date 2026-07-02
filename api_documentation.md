@@ -471,6 +471,107 @@ Ninguno.
 
 ---
 
+### Endpoint: Chatbot de Búsqueda de Productos (DeepSeek)
+
+* [x] Implementado
+* [ ] Pendiente
+* Método HTTP: POST
+* Ruta:
+
+```http
+/api/products/chat
+```
+
+### Descripción
+
+Permite conversar con un asistente virtual impulsado por DeepSeek para buscar productos mediante lenguaje natural conversacional. El chatbot analiza el historial de chat, busca coincidencias en la base de datos de manera híbrida (textual y semántica) y responde recomendando los productos encontrados.
+
+### Headers requeridos
+
+```json
+{
+  "Authorization": "Bearer {token}",
+  "Content-Type": "application/json"
+}
+```
+
+### Request Body (JSON)
+
+```json
+{
+  "messages": [
+    {
+      "role": "user",
+      "content": "Hola, busco zapatillas nike rojas"
+    }
+  ]
+}
+```
+
+#### Descripción de parámetros:
+
+| Parámetro | Tipo | Requerido | Descripción |
+| --------- | ---- | --------- | ----------- |
+| messages  | array| Sí        | Historial de mensajes de la conversación. Cada objeto debe tener `role` ("user", "assistant" o "system") y `content`. |
+
+### Response 200 OK
+
+```json
+{
+  "status": "success",
+  "message": "Respuesta de chatbot generada con éxito",
+  "data": {
+    "response": "¡Hola! He encontrado estas excelentes zapatillas Nike en nuestro inventario...",
+    "products": [
+      {
+        "productoId": 12,
+        "nombre": "Zapatillas Nike Pegasus 40",
+        "precios": [120.0],
+        "marca": "Nike",
+        "vendido_por": "Plaza Vea",
+        "url_venta": "...",
+        "caracteristicas": ["Color rojo"],
+        "categoria": "Deportes",
+        "sub_categoria": "Zapatillas",
+        "especificaciones": [],
+        "imagenes": [
+          {
+            "imagenId": 1,
+            "url": "..."
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+### Response 401
+
+```json
+{
+  "status": "error",
+  "message": "No autorizado."
+}
+```
+
+### Response 500
+
+```json
+{
+  "status": "error",
+  "message": "Error al generar respuesta del chatbot"
+}
+```
+
+### Reglas de negocio
+
+* El backend utiliza DeepSeek-V4 para analizar el historial de chat y extraer términos de búsqueda en español.
+* Con el término extraído se realiza una consulta de similitud por vectores usando CLIP y una búsqueda textual por concordancia.
+* Los productos resultantes son integrados en el contexto del LLM para que los mencione en la respuesta final sin inventar información no provista.
+
+---
+
 ### Endpoint: Buscar Productos (Catálogo General)
 
 * [ ] Implementado
@@ -978,6 +1079,7 @@ La siguiente tabla resume todos los endpoints documentados que la aplicación m�
 | POST   | `/api/auth/login`                 | Autenticación               | Implementado|
 | POST   | `/api/products/identify`          | Productos e Identificación  | Implementado|
 | GET    | `/api/products/voice`             | Productos e Identificación  | Implementado|
+| POST   | `/api/products/chat`              | Productos e Identificación  | Implementado|
 | GET    | `/api/products`                   | Productos e Identificación  | **Propuesto**|
 | GET    | `/history`                        | Historial de Búsquedas      | Implementado|
 | DELETE | `/api/history`                    | Historial de Búsquedas      | **Propuesto**|

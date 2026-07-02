@@ -4,6 +4,7 @@ from modules.product.dto.product_dto import ProductCreateDTO, ProductUpdateDTO, 
 from typing import List
 from fastapi_utils.cbv import cbv
 from .dto.voice_dto import VoiceQueryDTO
+from .dto.chat_dto import ChatRequestDTO
 from utils.security import get_current_user, get_current_admin_user
 from modules.auth.models.user import User
 
@@ -17,6 +18,10 @@ class ProductController:
     def __init__(self):
         self.service = ProductService()
     
+    @router.post("/chat", status_code=status.HTTP_200_OK)
+    def chat_product_search(self, body: ChatRequestDTO, current_user: User = Depends(get_current_user)):
+        return self.service.chat_product_search(body.messages, current_user.usuarioid)
+
     @router.post("/identify", status_code=status.HTTP_200_OK)
     def identify_product_by_image(self, file: UploadFile, current_user: User = Depends(get_current_user)):
             return self.service.find_product_by_image_vector(file, current_user.usuarioid)
