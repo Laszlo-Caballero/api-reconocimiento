@@ -20,3 +20,20 @@ class PromotionResponseDTO(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class SurprisePromotionCreateDTO(BaseModel):
+    title: str
+    description: Optional[str] = None
+    qr_data: Optional[str] = None
+
+
+class SurprisePromotionResponseDTO(BaseModel):
+    id: int
+    title: str
+    description: Optional[str] = None
+    qr_code_url: str
+
+    class Config:
+        from_attributes = True
+

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, status, UploadFile, File, Form, Depends
 from modules.promotion.services.promotion_service import PromotionService
-from modules.promotion.dto.promotion_dto import PromotionCreateDTO
+from modules.promotion.dto.promotion_dto import PromotionCreateDTO, SurprisePromotionCreateDTO
 from fastapi_utils.cbv import cbv
 from utils.security import get_current_user, get_current_admin_user
 from modules.auth.models.user import User
@@ -44,3 +44,26 @@ class PromotionController:
     @router.delete("/{id}", status_code=status.HTTP_200_OK)
     def delete_promotion(self, id: int, current_user: User = Depends(get_current_admin_user)):
         return self.service.delete_promotion(id)
+
+    @router.get("/surprises", status_code=status.HTTP_200_OK)
+    def list_surprise_promotions(self, current_user: User = Depends(get_current_user)):
+        return self.service.list_surprise_promotions()
+
+    @router.post("/surprises", status_code=status.HTTP_201_CREATED)
+    def create_surprise_promotion(self, body: SurprisePromotionCreateDTO, current_user: User = Depends(get_current_admin_user)):
+        return self.service.create_surprise_promotion_with_qr_data(body.title, body.description, body.qr_data)
+
+    @router.post("/surprises/upload", status_code=status.HTTP_201_CREATED)
+    def create_surprise_promotion_upload(
+        self,
+        title: str = Form(...),
+        description: Optional[str] = Form(None),
+        file: UploadFile = File(...),
+        current_user: User = Depends(get_current_admin_user)
+    ):
+        return self.service.create_surprise_promotion_with_upload(title, description, file)
+
+    @router.delete("/surprises/{id}", status_code=status.HTTP_200_OK)
+    def delete_surprise_promotion(self, id: int, current_user: User = Depends(get_current_admin_user)):
+        return self.service.delete_surprise_promotion(id)
+

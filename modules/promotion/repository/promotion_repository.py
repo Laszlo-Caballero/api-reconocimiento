@@ -63,3 +63,39 @@ class PromotionRepository:
             raise e
         finally:
             session.close()
+
+    def create_surprise_promotion(self, surprise: SurprisePromotion) -> SurprisePromotion:
+        session = self.db.get_session()
+        try:
+            session.add(surprise)
+            session.commit()
+            session.refresh(surprise)
+            return surprise
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()
+
+    def get_surprise_by_id(self, surprise_id: int) -> Optional[SurprisePromotion]:
+        session = self.db.get_session()
+        try:
+            return session.query(SurprisePromotion).filter(SurprisePromotion.id == surprise_id).first()
+        finally:
+            session.close()
+
+    def delete_surprise_promotion(self, surprise_id: int) -> bool:
+        session = self.db.get_session()
+        try:
+            surprise = session.query(SurprisePromotion).filter(SurprisePromotion.id == surprise_id).first()
+            if surprise:
+                session.delete(surprise)
+                session.commit()
+                return True
+            return False
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()
+
