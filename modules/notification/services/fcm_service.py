@@ -1,10 +1,13 @@
 from fastapi.responses import JSONResponse
 from modules.notification.repository.fcm_repository import FCMRepository
+from utils.firebase_config import init_firebase
 
 
 class FCMService:
     def __init__(self):
         self.repository = FCMRepository()
+        # Initialize Firebase (lazy init)
+        self.firebase_ready = init_firebase()
 
     def register_token(self, user_id: int, token: str, platform: str):
         try:
@@ -51,7 +54,7 @@ class FCMService:
 
     def send_notification(self, title: str, body: str, token: str = None):
         try:
-            from utils.firebase_config import firebase_initialized
+
             
             # Fetch target tokens
             if token:
@@ -68,7 +71,7 @@ class FCMService:
             sent_count = 0
             failed_tokens = []
             
-            if firebase_initialized:
+            if getattr(self, 'firebase_ready', False):
                 from firebase_admin import messaging
                 
                 # Send to each token
