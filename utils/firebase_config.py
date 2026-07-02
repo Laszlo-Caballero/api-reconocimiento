@@ -3,6 +3,7 @@ import logging
 import firebase_admin
 from firebase_admin import credentials
 
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("fastapi-app")
 
 _firebase_app = None
@@ -33,6 +34,9 @@ def init_firebase():
             return False
         try:
             import json
+            # Strip surrounding quotes if present (common when using .env)
+            if (json_str.startswith('\'') and json_str.endswith('\'') ) or (json_str.startswith('"') and json_str.endswith('"')):
+                json_str = json_str[1:-1]
             cred_dict = json.loads(json_str)
             cred = credentials.Certificate(cred_dict)
         except Exception as e:
