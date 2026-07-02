@@ -11,6 +11,9 @@ class IA:
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         print(f"Using device: {self.device}")
         
+        # Disable MKL-DNN/oneDNN to avoid 'could not create a primitive' error on CPU
+        torch.backends.mkldnn.enabled = False
+        
         self.model, self.preprocess = clip.load("ViT-B/32", device=self.device)
     
     def to_vector_image(self, image):
