@@ -16,3 +16,15 @@ class Promotion(Base):
 
     def __repr__(self):
         return f"<Promotion(id={self.id}, title={self.title}, discount_code={self.discount_code})>"
+
+
+class SurprisePromotion(Base):
+    __tablename__ = "promociones_sorpresa"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[str] = mapped_column(Text, nullable=True)
+    qr_code_url: Mapped[str] = mapped_column(String(255), nullable=False)
+
+    def __repr__(self):
+        return f"<SurprisePromotion(id={self.id}, title={self.title})>"

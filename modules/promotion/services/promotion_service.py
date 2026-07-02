@@ -137,3 +137,51 @@ class PromotionService:
                 "status": "error",
                 "message": f"Error al eliminar promoción: {str(e)}"
             }, status_code=500)
+
+    def redeem_promotion_code(self, code: str):
+        try:
+            promo = self.repository.get_promotion_by_code(code)
+            if promo:
+                return JSONResponse(content={
+                    "status": "success",
+                    "message": "¡Bono encontrado!",
+                    "data": jsonable_encoder(promo)
+                }, status_code=200)
+            
+            # Fetch surprise promos from database
+            db_surprises = self.repository.get_all_surprise_promotions()
+            if db_surprises:
+                surprises = [
+                    {
+                        "id": s.id,
+                        "title": s.title,
+                        "description": s.description,
+                        "discount_code": code,
+                        "qr_code_url": s.qr_code_url
+                    }
+                    for s in db_surprises
+                ]
+            else:
+                surprises = [
+                    {
+                        "id": -1,
+                        "title": "Bono Misterioso 🎁",
+                        "description": "¡Felicidades! Has desbloqueado un cupón misterioso del 15% de descuento en toda la tienda.",
+                        "discount_code": code,
+                        "qr_code_url": "/images/promotions/mystery_gift.png"
+                    }
+                ]
+            
+            idx = sum(ord(c) for c in code) % len(surprises)
+            chosen_promo = surprises[idx]
+            
+            return JSONResponse(content={
+                "status": "success",
+                "message": "¡Bono especial sorpresa activado!",
+                "data": chosen_promo
+            }, status_code=200)
+        except Exception as e:
+            return JSONResponse(content={
+                "status": "error",
+                "message": f"Error al validar bono: {str(e)}"
+            }, status_code=500)

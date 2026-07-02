@@ -1,12 +1,19 @@
 from sqlalchemy.orm import Session
 from database.db import PostgreDatabase
-from modules.promotion.models.promotion_model import Promotion
+from modules.promotion.models.promotion_model import Promotion, SurprisePromotion
 from typing import List, Optional
 
 
 class PromotionRepository:
     def __init__(self):
         self.db = PostgreDatabase()
+
+    def get_all_surprise_promotions(self) -> List[SurprisePromotion]:
+        session = self.db.get_session()
+        try:
+            return session.query(SurprisePromotion).all()
+        finally:
+            session.close()
 
     def create_promotion(self, promotion: Promotion) -> Promotion:
         session = self.db.get_session()
@@ -32,6 +39,13 @@ class PromotionRepository:
         session = self.db.get_session()
         try:
             return session.query(Promotion).filter(Promotion.id == promotion_id).first()
+        finally:
+            session.close()
+
+    def get_promotion_by_code(self, discount_code: str) -> Optional[Promotion]:
+        session = self.db.get_session()
+        try:
+            return session.query(Promotion).filter(Promotion.discount_code == discount_code).first()
         finally:
             session.close()
 

@@ -37,6 +37,10 @@ class PromotionController:
     ):
         return self.service.create_promotion_with_upload(title, description, discount_code, file)
 
+    @router.get("/redeem/{code}", status_code=status.HTTP_200_OK)
+    def redeem_promotion(self, code: str, current_user: User = Depends(get_current_user)):
+        return self.service.redeem_promotion_code(code)
+
     @router.delete("/{id}", status_code=status.HTTP_200_OK)
     def delete_promotion(self, id: int, current_user: User = Depends(get_current_admin_user)):
         return self.service.delete_promotion(id)
