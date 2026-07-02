@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import Optional
 
 
 class FCMRegisterDTO(BaseModel):
@@ -8,4 +9,4 @@ class FCMRegisterDTO(BaseModel):
 class FCMSendNotificationDTO(BaseModel):
     title: str
     body: str
-    token: str = None  # None for broadcast to all devices
+    token: Optional[str] = None  # None for broadcast to all devices

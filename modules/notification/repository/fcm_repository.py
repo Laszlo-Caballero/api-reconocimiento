@@ -46,3 +46,18 @@ class FCMRepository:
             return session.query(FCMToken).all()
         finally:
             session.close()
+
+    def delete_token_by_value(self, token_value: str) -> bool:
+        session = self.db.get_session()
+        try:
+            tok = session.query(FCMToken).filter(FCMToken.token == token_value).first()
+            if tok:
+                session.delete(tok)
+                session.commit()
+                return True
+            return False
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()

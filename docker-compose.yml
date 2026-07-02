@@ -21,6 +21,7 @@ services:
       - OPENAI_BASE_URL=https://integrate.api.nvidia.com/v1
       - OPENAI_MODEL=deepseek-ai/deepseek-v4-flash
       - TORCH_ONEDNN_OPTS=0
+      - FIREBASE_CREDENTIALS_PATH=firebase-credentials.json
     restart: unless-stopped
     volumes:
       - shared-images:/app/images
@@ -44,6 +45,7 @@ services:
       - OPENAI_BASE_URL=https://integrate.api.nvidia.com/v1
       - OPENAI_MODEL=deepseek-ai/deepseek-v4-flash
       - TORCH_ONEDNN_OPTS=0
+      - FIREBASE_CREDENTIALS_PATH=firebase-credentials.json
     restart: unless-stopped
     volumes:
       - shared-images:/app/images
