@@ -54,12 +54,23 @@ class PromotionService:
             # Construct public URL
             qr_code_url = f"/images/promotions/{filename}"
 
+            from modules.promotion.models.promotion_model import SurprisePromotion
+
             promotion = Promotion(
                 title=dto.title,
                 description=dto.description,
                 discount_code=dto.discount_code,
                 qr_code_url=qr_code_url
             )
+            if dto.surprises:
+                promotion.surprises = [
+                    SurprisePromotion(
+                        title=s.title,
+                        description=s.description,
+                        qr_code_url=qr_code_url
+                    )
+                    for s in dto.surprises
+                ]
             created = self.repository.create_promotion(promotion)
             return JSONResponse(content={
                 "status": "success",
@@ -142,11 +153,27 @@ class PromotionService:
         try:
             promo = self.repository.get_promotion_by_code(code)
             if promo:
+                if promo.surprises:
+                    idx = sum(ord(c) for c in code) % len(promo.surprises)
+                    chosen_surprise = promo.surprises[idx]
+                    return JSONResponse(content={
+                        "status": "success",
+                        "message": "¡Bono especial sorpresa activado!",
+                        "data": {
+                            "id": chosen_surprise.id,
+                            "title": chosen_surprise.title,
+                            "description": chosen_surprise.description,
+                            "discount_code": code,
+                            "qr_code_url": promo.qr_code_url
+                        }
+                    }, status_code=200)
+
                 return JSONResponse(content={
                     "status": "success",
                     "message": "¡Bono encontrado!",
                     "data": jsonable_encoder(promo)
                 }, status_code=200)
+
             
             # Fetch surprise promos from database
             db_surprises = self.repository.get_all_surprise_promotions()

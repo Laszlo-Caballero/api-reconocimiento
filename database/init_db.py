@@ -25,21 +25,35 @@ def init_db():
         count = session.query(SurprisePromotion).count()
         if count == 0:
             print("Sembrando promociones sorpresa...")
+            # Create default parent promotion
+            default_promo = Promotion(
+                title="Promoción Sorpresa General 🎁",
+                description="Escanea este código para desbloquear premios sorpresa.",
+                discount_code="SORPRESA",
+                qr_code_url="/images/promotions/mystery_gift.png"
+            )
+            session.add(default_promo)
+            session.commit()
+            session.refresh(default_promo)
+
             surprises = [
                 SurprisePromotion(
                     title="Bono Misterioso 🎁",
                     description="¡Felicidades! Has desbloqueado un cupón misterioso del 15% de descuento en toda la tienda.",
-                    qr_code_url="/images/promotions/mystery_gift.png"
+                    qr_code_url="/images/promotions/mystery_gift.png",
+                    promotion_id=default_promo.id
                 ),
                 SurprisePromotion(
                     title="Super Bono de Caja Chica ⚡",
                     description="¡Escaneo de la suerte! Recibe S/ 20 de descuento directo en tu siguiente ticket mayor a S/ 100.",
-                    qr_code_url="/images/promotions/lucky_strike.png"
+                    qr_code_url="/images/promotions/lucky_strike.png",
+                    promotion_id=default_promo.id
                 ),
                 SurprisePromotion(
                     title="Recompensa Eco-Amigable 🌱",
                     description="¡Gracias por preferirnos! Llévate una bolsa reutilizable gratis en tu compra superior a S/ 50.",
-                    qr_code_url="/images/promotions/eco_bonus.png"
+                    qr_code_url="/images/promotions/eco_bonus.png",
+                    promotion_id=default_promo.id
                 )
             ]
             session.add_all(surprises)
@@ -50,6 +64,7 @@ def init_db():
         print(f"Error al sembrar promociones sorpresa: {e}")
     finally:
         session.close()
+
 
 
 def drop_db():
