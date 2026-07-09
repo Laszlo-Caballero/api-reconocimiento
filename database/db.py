@@ -14,7 +14,9 @@ class PostgreDatabase:
         
         database_url = f"postgresql+psycopg2://{os.getenv('DATABASE_USER')}:{os.getenv('DATABASE_PASSWORD')}@{os.getenv('DATABASE_HOST')}:{os.getenv('DATABASE_PORT')}/{os.getenv('DATABASE_NAME')}"
         
-        self.engine = create_engine(database_url, echo=False)
+        self.engine = create_engine(database_url, echo=False,     connect_args={
+        "sslmode": "require"
+    })
         self.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=self.engine)
     
     def get_session(self) -> Session:
