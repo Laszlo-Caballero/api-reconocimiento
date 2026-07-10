@@ -6,6 +6,7 @@ import re
 import os
 import base64
 import requests
+from openai import OpenAI
 from PIL import Image
 from fastapi import UploadFile
 import networkx as nx
@@ -304,6 +305,10 @@ class FloorPan:
     #  5. Clasificación con Qwen2.5-VL (Ollama)                          #
     # ------------------------------------------------------------------ #
     def classify_rooms_with_ai(self, image_bytes: bytes, rooms_data: list) -> dict:
+        api_key = os.getenv("OPENAI_API_KEY")
+        base_url = os.getenv("OPENAI_BASE_URL", "https://integrate.api.nvidia.com/v1")
+        model = os.getenv("OPENAI_MODEL", "deepseek-ai/deepseek-v4-flash")
+        
         # Formatear los rooms_data para el payload del servidor
         rooms_summary = [
             {
@@ -316,28 +321,69 @@ class FloorPan:
             for r in rooms_data
         ]
 
-        payload = {
-            "image_base64": base64.b64encode(image_bytes).decode(),
-            "rooms_data": rooms_summary
-        }
-
-        try:
-            url = f"{self.NGROK_ENDPOINT.rstrip('/')}/classify-rooms"
-            print(f"[classify_rooms_with_ai] Enviando petición a {url}...")
-            response = requests.post(
-                url,
-                json=payload,
-                timeout=300
-            )
-            response.raise_for_status()
-            resp_json = response.json()
-            
-            # El endpoint de la API retorna: {"status": "success", "data": "..."}
-            raw = resp_json.get("data", "").strip()
-            result = self._safe_parse(raw)
-        except Exception as e:
-            print(f"[ERROR] Error al clasificar cuartos vía ngrok: {e}")
+        if not api_key:
+            print("[WARN] OPENAI_API_KEY no configurado en variables de entorno. Usando fallback.")
             result = {"rooms": []}
+        else:
+            image_base64 = base64.b64encode(image_bytes).decode()
+            
+            prompt = (
+                "Eres un experto en análisis de planos arquitectónicos y evacuación.\n"
+                "Se te proporciona una imagen de un plano arquitectónico y una lista de habitaciones pre-segmentadas por OpenCV.\n"
+                "Tu tarea es analizar visualmente la imagen del plano y correlacionarla con la lista de habitaciones provista para asignar a cada una:\n"
+                "1. Un nombre descriptivo en español ('name') basado en el texto OCR visible en la habitación o su función lógica (ej. 'Oficina 101', 'Pasillo Principal', 'Baño Damas').\n"
+                "2. Un tipo de habitación ('type') que debe ser estrictamente uno de los siguientes: 'office', 'meeting_room', 'bathroom', 'hallway', 'reception', 'storage', 'staircase', 'open_space', 'other'.\n"
+                "3. Una estimación de metros cuadrados ('estimated_sqm') basada en el tamaño visual en relación con el plano.\n"
+                "4. Conexiones ('connections'): una lista de IDs de otras habitaciones que tienen conexión directa (puertas o pasos abiertos).\n\n"
+                f"Habitaciones segmentadas (rooms_data):\n{json.dumps(rooms_summary, indent=2)}\n\n"
+                "Responde estrictamente en formato JSON válido con la siguiente estructura:\n"
+                "{\n"
+                "  \"rooms\": [\n"
+                "    {\n"
+                "      \"id\": <id_habitacion>,\n"
+                "      \"name\": \"<nombre_en_espanol>\",\n"
+                "      \"type\": \"<tipo>\",\n"
+                "      \"estimated_sqm\": <metros_cuadrados_estimados>,\n"
+                "      \"connections\": [<id_vecino_1>, <id_vecino_2>]\n"
+                "    }\n"
+                "  ]\n"
+                "}\n"
+                "IMPORTANTE: No incluyas explicaciones, Markdown ni bloques de código. Solo el JSON puro."
+            )
+
+            try:
+                print(f"[classify_rooms_with_ai] Enviando petición a {base_url} usando la librería openai y modelo {model}...")
+                client = OpenAI(
+                    api_key=api_key,
+                    base_url=base_url
+                )
+                response = client.chat.completions.create(
+                    model=model,
+                    messages=[
+                        {
+                            "role": "user",
+                            "content": [
+                                {
+                                    "type": "text",
+                                    "text": prompt
+                                },
+                                {
+                                    "type": "image_url",
+                                    "image_url": {
+                                        "url": f"data:image/png;base64,{image_base64}"
+                                    }
+                                }
+                            ]
+                        }
+                    ],
+                    temperature=0.2,
+                    max_tokens=4096
+                )
+                raw = response.choices[0].message.content.strip()
+                result = self._safe_parse(raw)
+            except Exception as e:
+                print(f"[ERROR] Error al clasificar cuartos con la librería openai: {e}")
+                result = {"rooms": []}
 
         # Fallback: rellenar IDs no devueltos por la IA
         ai_ids = {r["id"] for r in result.get("rooms", [])}

@@ -1,17 +1,26 @@
 version: '3.8'
+
 services:
-  postgres:
-    image: pgvector/pgvector:pg16
-    container_name: postgres-vectores
-    environment:
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: admin123
-      POSTGRES_DB: productos
+  web:
+    build: .
+    container_name: fastapi-app
     ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - "8000"
+    env_file:
+      - .env
     restart: unless-stopped
+    volumes:
+      - shared-images:/app/images
+
+  worker:
+    build: .
+    container_name: celery-worker
+    command: celery -A celery_app.celery_app worker --loglevel=info
+    env_file:
+      - .env
+    restart: unless-stopped
+    volumes:
+      - shared-images:/app/images
 
 volumes:
-  postgres_data:
+  shared-images:

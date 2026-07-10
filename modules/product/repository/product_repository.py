@@ -150,3 +150,37 @@ class ProductRepository:
             raise e
         finally:
             session.close()
+
+    def get_products_filtered(self, query: Optional[str] = None, page: int = 1, limit: int = 12) -> tuple[List[ProductResponse], int]:
+        """Obtener productos filtrados por término de búsqueda en varios campos o listar todos con paginación"""
+        session = self.db.get_session()
+        try:
+            q = session.query(Product).options(
+                joinedload(Product.imagenes),
+                joinedload(Product.tiendas)
+            )
+            if query:
+                search_filter = f"%{query}%"
+                q = q.filter(
+                    Product.nombre.ilike(search_filter) |
+                    Product.marca.ilike(search_filter) |
+                    Product.categoria.ilike(search_filter) |
+                    Product.sub_categoria.ilike(search_filter) |
+                    Product.vendido_por.ilike(search_filter)
+                )
+            
+            total = q.count()
+            
+            offset = (page - 1) * limit
+            products = q.offset(offset).limit(limit).all()
+            
+            # Mapear a ProductResponse con similitud 100.0 por defecto
+            products_res = []
+            for p in products:
+                prod_res = ProductResponse.from_entity(p)
+                prod_res.similitud = 100.0
+                products_res.append(prod_res)
+            return products_res, total
+        finally:
+            session.close()
+
